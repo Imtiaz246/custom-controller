@@ -1,8 +1,8 @@
 package main
 
 import (
-	customclientset "github.com/imtiaz246/sample-cntroller/pkg/client/clientset/versioned"
-	custominformers "github.com/imtiaz246/sample-cntroller/pkg/client/informers/externalversions"
+	customclientset "github.com/imtiaz246/custom-cntroller/pkg/client/clientset/versioned"
+	custominformers "github.com/imtiaz246/custom-cntroller/pkg/client/informers/externalversions"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
