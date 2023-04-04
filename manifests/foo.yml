@@ -1,0 +1,12 @@
+apiVersion: cho.me/v1beta1
+kind: FooServer
+metadata:
+  labels:
+    app.kubernetes.io/created-by: fooserver
+  name: fooservers.cho.me
+  namespace: default
+spec:
+  deploymentSpec:
+    deploymentName: "fooServerDeployment"
+    podReplicas: 4
+    podContainerPort: 3000

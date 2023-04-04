@@ -6,19 +6,18 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 type FooServer struct {
-	metav1.TypeMeta   `json:"inline"`
+	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   FooServerSpec   `json:"spec"`
-	Status FooServerStatus `json:"status"`
+	Spec   FooServerSpec   `json:"spec,omitempty"`
+	Status FooServerStatus `json:"status,omitempty"`
 }
 
 type FooServerSpec struct {
 	DeploymentSpec FooServerDeploymentSpec `json:"deploymentSpec"`
-	ServiceSpec    FooServerServiceSpec    `json:"serviceSpec"`
-	SecretSpec     FooServerSecretSpec     `json:"secretSpec"`
+	ServiceSpec    FooServerServiceSpec    `json:"serviceSpec,omitempty"`
+	SecretSpec     FooServerSecretSpec     `json:"secretSpec,omitempty"`
 }
 
 type FooServerDeploymentSpec struct {
@@ -45,10 +44,9 @@ type FooServerStatus struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 type FooServerList struct {
-	metav1.TypeMeta   `json:"inline"`
-	metav1.ObjectMeta `json:"metadata"`
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []FooServer `json:"items"`
 }

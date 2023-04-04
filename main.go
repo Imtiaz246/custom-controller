@@ -1,9 +1,10 @@
 package main
 
 import (
-	customclientset "github.com/imtiaz246/custom-cntroller/pkg/client/clientset/versioned"
-	custominformers "github.com/imtiaz246/custom-cntroller/pkg/client/informers/externalversions"
-	"k8s.io/client-go/informers"
+	"github.com/imtiaz246/custom-controller/controller"
+	customclientset "github.com/imtiaz246/custom-controller/pkg/client/clientset/versioned"
+	custominformers "github.com/imtiaz246/custom-controller/pkg/client/informers/externalversions"
+	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"log"
@@ -26,19 +27,23 @@ func main() {
 		log.Fatalf("erorr %s building clientset from config\n", err.Error())
 	}
 
-	exampleClientSet, err := customclientset.NewForConfig(config)
+	customClientSet, err := customclientset.NewForConfig(config)
 	if err != nil {
 		log.Fatalf("erorr %s building clientset from config\n", err.Error())
 	}
 
-	kubeInformerFactory := informers.NewSharedInformerFactory(kubeClientSet, time.Second*30)
-	exampleInformerFactory := custominformers.NewSharedInformerFactory(exampleClientSet, time.Second*30)
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClientSet, time.Second*30)
+	customInformerFactory := custominformers.NewSharedInformerFactory(customClientSet, time.Second*30)
 
-	Controller := NewController()
+	Controller := controller.NewController(
+		kubeClientSet,
+		customClientSet,
+		kubeInformerFactory.Apps().V1().Deployments(),
+		customInformerFactory.Cho().V1beta1().FooServers())
 
 	stopChan := make(chan struct{})
 	kubeInformerFactory.Start(stopChan)
-	exampleInformerFactory.Start(stopChan)
+	customInformerFactory.Start(stopChan)
 	Controller.Run(5, stopChan)
 	<-stopChan
 }
