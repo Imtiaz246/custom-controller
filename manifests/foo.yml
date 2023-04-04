@@ -8,5 +8,5 @@ metadata:
 spec:
   deploymentSpec:
     deploymentName: "fooServerDeployment"
-    podReplicas: 4
+    podReplicas: 3
     podContainerPort: 3000
