@@ -1,16 +1,22 @@
 package controller
 
 import (
+	"context"
 	"fmt"
+	"github.com/imtiaz246/custom-controller/pkg/apis/cho.me/v1beta1"
 	customclientset "github.com/imtiaz246/custom-controller/pkg/client/clientset/versioned"
 	customv1beta1informers "github.com/imtiaz246/custom-controller/pkg/client/informers/externalversions/cho.me/v1beta1"
-	"github.com/imtiaz246/custom-controller/pkg/client/listers/cho.me/v1beta1"
+	customlisters "github.com/imtiaz246/custom-controller/pkg/client/listers/cho.me/v1beta1"
+	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kubeappsv1informers "k8s.io/client-go/informers/apps/v1"
+	kubecorev1informers "k8s.io/client-go/informers/core/v1"
 	"k8s.io/client-go/kubernetes"
-	appsv1 "k8s.io/client-go/listers/apps/v1"
-	corev1 "k8s.io/client-go/listers/core/v1"
+	appsv1listers "k8s.io/client-go/listers/apps/v1"
+	corev1listers "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"log"
@@ -25,16 +31,16 @@ type Controller struct {
 	customClientSet customclientset.Interface
 
 	deploymentsSynced cache.InformerSynced
-	deploymentsLister appsv1.DeploymentLister
+	deploymentsLister appsv1listers.DeploymentLister
 
 	serviceSynced cache.InformerSynced
-	serviceLister corev1.ServiceLister
+	serviceLister corev1listers.ServiceLister
 
 	secretSynced cache.InformerSynced
-	secretLister corev1.SecretLister
+	secretLister corev1listers.SecretLister
 
 	fooServerSynced cache.InformerSynced
-	fooServerLister v1beta1.FooServerLister
+	fooServerLister customlisters.FooServerLister
 
 	workQueue workqueue.RateLimitingInterface
 }
@@ -43,6 +49,8 @@ func NewController(
 	kubeClientSet kubernetes.Interface,
 	customClientSet customclientset.Interface,
 	deploymentsInformer kubeappsv1informers.DeploymentInformer,
+	servicesInformer kubecorev1informers.ServiceInformer,
+	secretsInformer kubecorev1informers.SecretInformer,
 	fooServerInformer customv1beta1informers.FooServerInformer) *Controller {
 
 	c := &Controller{
@@ -52,25 +60,86 @@ func NewController(
 		deploymentsSynced: deploymentsInformer.Informer().HasSynced,
 		deploymentsLister: deploymentsInformer.Lister(),
 
+		serviceSynced: servicesInformer.Informer().HasSynced,
+		serviceLister: servicesInformer.Lister(),
+
+		secretSynced: secretsInformer.Informer().HasSynced,
+		secretLister: secretsInformer.Lister(),
+
 		fooServerSynced: fooServerInformer.Informer().HasSynced,
 		fooServerLister: fooServerInformer.Lister(),
 
 		workQueue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), fooServerQueue),
 	}
-
+	// event handler for fooServer resource events
 	fooServerInformer.Informer().AddEventHandler(&cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj any) {
-			c.enqObjKeyToWorkQueue(obj)
+			c.enqFooServerKeyToWorkQueue(obj)
 		},
 		UpdateFunc: func(oldObj, newObj any) {
-			c.enqObjKeyToWorkQueue(newObj)
+			c.enqFooServerKeyToWorkQueue(newObj)
 		},
 	})
+	// event handler for deployment resource events
+	deploymentsInformer.Informer().AddEventHandler(&cache.ResourceEventHandlerFuncs{
+		AddFunc: c.handleInformedObject,
+		UpdateFunc: func(old, new any) {
+			// check the resource version, if not same call handleInformedObject
+			oldDeploy := old.(*appsv1.Deployment)
+			newDeploy := new.(*appsv1.Deployment)
+
+			if oldDeploy.ResourceVersion == newDeploy.ResourceVersion {
+				return
+			}
+
+			c.handleInformedObject(new)
+		},
+		DeleteFunc: c.handleInformedObject,
+	})
+	// todo: event handler for service resource events
+	// todo: event handler for secret resource events
 
 	return c
 }
 
-func (c *Controller) enqObjKeyToWorkQueue(obj any) {
+func (c *Controller) handleInformedObject(obj any) {
+	var object metav1.Object // the object implements metav1.Object interface
+	var ok bool
+
+	//todo: understand
+	if object, ok = obj.(metav1.Object); !ok {
+		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+		if !ok {
+			utilruntime.HandleError(fmt.Errorf("error decoding object, invalid type"))
+			return
+		}
+		object, ok = tombstone.Obj.(metav1.Object)
+		if !ok {
+			utilruntime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
+			return
+		}
+		log.Println("Recovered deleted object", "resourceName", object.GetName())
+	}
+
+	/*
+		- Check the owner is one of FooServer kind
+		- Get the owner resource with the name
+		- If the owner resource is still exits, enqueue to workQueue
+	*/
+	if ownerRef := metav1.GetControllerOf(object); ownerRef != nil {
+		if ownerRef.Kind != "FooServer" {
+			return
+		}
+		fooServerResource, err := c.fooServerLister.FooServers("default").Get(ownerRef.Name)
+		if err != nil {
+			log.Println("Ignore orphaned object", "object: ", object.GetName(), "ownerName: ", ownerRef.Name)
+			return
+		}
+		c.enqFooServerKeyToWorkQueue(fooServerResource)
+	}
+}
+
+func (c *Controller) enqFooServerKeyToWorkQueue(obj any) {
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(err)
@@ -155,15 +224,124 @@ func (c *Controller) processNextQueueItem() bool {
 // implement the business logic here.
 func (c *Controller) fooServerSyncHandler(key string) error {
 	/*
-		step1: convert the namespaceName to namespace & name
-		step2: get the fooServer resource from the local cache with this namespace/name
-				if not found or the resource is no longer exists:
-					handleError and stop processing
-		step3: create a deployment, secret and service from fooServer spec if not exists previously.
-				if any error occurs, return error for future processing of the obj
-		step4:
+		- convert the namespaceName to namespace & name
+		- get the fooServer resource and check the spec fields
+		- get the resources owned by the fooServer resource
+		- if the owned resources not found create them in order
+		- secret -> deployment -> service
+		- compare the stat & sync the state
+		- update the status sub-resource
 	*/
+	// convert the namespaceName to namespace & nam
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	if err != nil {
+		utilruntime.HandleError(fmt.Errorf("invalid resource key %v", key))
+		return nil
+	}
+	// get the fooServer resource and check the spec fields
+	fooServer, err := c.fooServerLister.FooServers(namespace).Get(name)
+	if err != nil {
+		// The fooServer resource may no longer exist, in which case we stop processing.
+		if errors.IsNotFound(err) {
+			utilruntime.HandleError(fmt.Errorf("foo '%s' in work queue no longer exists", key))
+			return nil
+		}
+	}
+	deploymentName := fooServer.Spec.DeploymentSpec.Name
+	serviceName := fooServer.Spec.ServiceSpec.Name
+	secretName := fooServer.Spec.SecretSpec.Name
 
-	fmt.Println("changed yay:", key)
+	// todo: use webhook for these kind of validation or use client-gen validation
+	if deploymentName == "" {
+		utilruntime.HandleError(fmt.Errorf("%s: deployment name must be specified", key))
+		return nil
+	}
+	if serviceName == "" {
+		utilruntime.HandleError(fmt.Errorf("%s: service name must be specified", key))
+		return nil
+	}
+	if secretName == "" {
+		utilruntime.HandleError(fmt.Errorf("%s: secret name must be specified", key))
+	}
+
+	// create secret resource if not exists
+	secret, err := c.secretLister.Secrets(fooServer.Namespace).Get(secretName)
+	if errors.IsNotFound(err) {
+		secret, err = c.kubeClientSet.CoreV1().Secrets(fooServer.Namespace).Create(context.TODO(), newSecret(fooServer), metav1.CreateOptions{})
+	}
+	if err != nil {
+		return err
+	}
+
+	// create deployment resource if not exists
+	deployment, err := c.deploymentsLister.Deployments(fooServer.Namespace).Get(deploymentName)
+	if errors.IsNotFound(err) {
+		deployment, err = c.kubeClientSet.AppsV1().Deployments(fooServer.Namespace).Create(context.TODO(), newDeployment(fooServer), metav1.CreateOptions{})
+	}
+	if err != nil {
+		return err
+	}
+
+	// create service resource if not exists
+	service, err := c.serviceLister.Services(fooServer.Namespace).Get(serviceName)
+	if errors.IsNotFound(err) {
+		service, err = c.kubeClientSet.CoreV1().Services(fooServer.Namespace).Create(context.TODO(), newService(fooServer), metav1.CreateOptions{})
+	}
+	if err != nil {
+		return err
+	}
+
+	// reconcile resources
+	fooServerSecSpec := fooServer.Spec.SecretSpec
+	fooServerSerSpec := fooServer.Spec.ServiceSpec
+	fooServerDepSpec := fooServer.Spec.DeploymentSpec
+
+	if fooServerSecSpec.Username != string(secret.Data["ADMIN_USERNAME"]) || fooServerSecSpec.Password != string(secret.Data["ADMIN_PASSWORD"]) {
+		secret.Data["ADMIN_USERNAME"] = []byte(fooServerSecSpec.Username)
+		secret.Data["ADMIN_PASSWORD"] = []byte(fooServerSecSpec.Username)
+		secret, err = c.kubeClientSet.CoreV1().Secrets(fooServer.Namespace).Update(context.TODO(), secret, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
+	if fooServerDepSpec.PodReplicas != nil && fooServerDepSpec.PodReplicas != deployment.Spec.Replicas {
+		deployment.Spec.Replicas = fooServerDepSpec.PodReplicas
+		deployment, err = c.kubeClientSet.AppsV1().Deployments(fooServer.Namespace).Update(context.TODO(), deployment, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+	}
+	if fooServerDepSpec.PodContainerPort != nil && *fooServerDepSpec.PodContainerPort != deployment.Spec.Template.Spec.Containers[0].Ports[0].ContainerPort {
+		deployment.Spec.Template.Spec.Containers[0].Ports[0].ContainerPort = *fooServerDepSpec.PodContainerPort
+		deployment, err = c.kubeClientSet.AppsV1().Deployments(fooServer.Namespace).Update(context.TODO(), deployment, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
+	if fooServerSerSpec.NodePort != nil && *fooServerSerSpec.NodePort != service.Spec.Ports[0].NodePort {
+		service.Spec.Ports[0].NodePort = *fooServerSerSpec.NodePort
+		service, err = c.kubeClientSet.CoreV1().Services(fooServer.Namespace).Update(context.TODO(), service, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
+	// todo: reconcile other service spec
+
+	err = c.updateFooServerStatus(deployment, fooServer)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (c *Controller) updateFooServerStatus(deployment *appsv1.Deployment, fooServer *v1beta1.FooServer) error {
+	fooServerCopy := fooServer.DeepCopy()
+	fooServerCopy.Status.AvailableReplicas = *deployment.Spec.Replicas
+
+	_, err := c.customClientSet.ChoV1beta1().FooServers(fooServer.Namespace).Update(context.TODO(), fooServerCopy, metav1.UpdateOptions{})
+	return err
 }

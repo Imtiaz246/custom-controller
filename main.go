@@ -32,13 +32,15 @@ func main() {
 		log.Fatalf("erorr %s building clientset from config\n", err.Error())
 	}
 
-	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClientSet, time.Second*30)
-	customInformerFactory := custominformers.NewSharedInformerFactory(customClientSet, time.Second*30)
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClientSet, time.Second*5)
+	customInformerFactory := custominformers.NewSharedInformerFactory(customClientSet, time.Second*5)
 
 	Controller := controller.NewController(
 		kubeClientSet,
 		customClientSet,
 		kubeInformerFactory.Apps().V1().Deployments(),
+		kubeInformerFactory.Core().V1().Services(),
+		kubeInformerFactory.Core().V1().Secrets(),
 		customInformerFactory.Cho().V1beta1().FooServers())
 
 	stopChan := make(chan struct{})

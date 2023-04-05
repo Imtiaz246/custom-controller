@@ -35,7 +35,7 @@ spec:
             properties:
               deploymentSpec:
                 properties:
-                  deploymentName:
+                  name:
                     type: string
                   podContainerPort:
                     format: int32
@@ -44,41 +44,48 @@ spec:
                     format: int32
                     type: integer
                 required:
-                - deploymentName
+                - name
                 - podContainerPort
                 - podReplicas
                 type: object
               secretSpec:
                 properties:
-                  passwordData:
+                  name:
                     type: string
-                  secretName:
+                  password:
                     type: string
-                  usernameData:
+                  username:
                     type: string
                 required:
-                - passwordData
-                - secretName
-                - usernameData
+                - name
+                - password
+                - username
                 type: object
               serviceSpec:
                 properties:
-                  serviceName:
+                  name:
                     type: string
-                  servicePort:
+                  nodePort:
+                    format: int32
                     type: integer
-                  serviceTargetPort:
+                  port:
+                    format: int32
                     type: integer
-                  serviceType:
+                  targetPort:
+                    format: int32
+                    type: integer
+                  type:
                     type: string
                 required:
-                - serviceName
-                - servicePort
-                - serviceTargetPort
-                - serviceType
+                - name
+                - nodePort
+                - port
+                - targetPort
+                - type
                 type: object
             required:
             - deploymentSpec
+            - serviceSpec
             type: object
           status:
             properties:

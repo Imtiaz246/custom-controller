@@ -16,27 +16,28 @@ type FooServer struct {
 
 type FooServerSpec struct {
 	DeploymentSpec FooServerDeploymentSpec `json:"deploymentSpec"`
-	ServiceSpec    FooServerServiceSpec    `json:"serviceSpec,omitempty"`
+	ServiceSpec    FooServerServiceSpec    `json:"serviceSpec"`
 	SecretSpec     FooServerSecretSpec     `json:"secretSpec,omitempty"`
 }
 
 type FooServerDeploymentSpec struct {
-	DeploymentName   string `json:"deploymentName"`
+	Name             string `json:"name"`
 	PodReplicas      *int32 `json:"podReplicas"`
 	PodContainerPort *int32 `json:"podContainerPort"`
 }
 
 type FooServerServiceSpec struct {
-	ServiceName       string `json:"serviceName"`
-	ServiceType       string `json:"serviceType"`
-	ServicePort       *int   `json:"servicePort"`
-	ServiceTargetPort *int   `json:"serviceTargetPort"`
+	Name       string `json:"name"`
+	Type       string `json:"type"`
+	Port       *int32 `json:"port"`
+	TargetPort *int32 `json:"targetPort"`
+	NodePort   *int32 `json:"nodePort"`
 }
 
 type FooServerSecretSpec struct {
-	SecretName   string `json:"secretName"`
-	UsernameData string `json:"usernameData"`
-	PasswordData string `json:"passwordData"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type FooServerStatus struct {

@@ -15,7 +15,7 @@ func newDeployment(fooServer *customv1beta1.FooServer) *appsv1.Deployment {
 	}
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fooServer.Name,
+			Name:      fooServer.Spec.DeploymentSpec.Name,
 			Namespace: fooServer.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(fooServer, customv1beta1.SchemeGroupVersion.WithKind("FooServer")),
@@ -85,6 +85,59 @@ func newDeployment(fooServer *customv1beta1.FooServer) *appsv1.Deployment {
 					},
 				},
 			},
+		},
+	}
+}
+
+func newService(fooServer *customv1beta1.FooServer) *corev1.Service {
+	labels := map[string]string{
+		"app":        "api-server-service",
+		"controller": fooServer.Name,
+	}
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fooServer.Spec.ServiceSpec.Name,
+			Namespace: fooServer.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(fooServer, customv1beta1.SchemeGroupVersion.WithKind("FooServer")),
+			},
+			Labels: labels,
+		},
+		Spec: corev1.ServiceSpec{
+			Type:     "NodePort",
+			Selector: labels,
+			Ports: []corev1.ServicePort{
+				{
+					Protocol: "TCP",
+					Port:     8080,
+					TargetPort: intstr.IntOrString{
+						IntVal: 3000,
+						StrVal: "3000",
+					},
+					NodePort: 30100,
+				},
+			},
+		},
+	}
+}
+
+func newSecret(fooServer *customv1beta1.FooServer) *corev1.Secret {
+	labels := map[string]string{
+		"app":        "api-server-service",
+		"controller": fooServer.Name,
+	}
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fooServer.Spec.SecretSpec.Name,
+			Namespace: fooServer.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(fooServer, customv1beta1.SchemeGroupVersion.WithKind("FooServer")),
+			},
+			Labels: labels,
+		},
+		Data: map[string][]byte{
+			"ADMIN_USERNAME": []byte("admin"),
+			"ADMIN_PASSWORD": []byte("password"),
 		},
 	}
 }

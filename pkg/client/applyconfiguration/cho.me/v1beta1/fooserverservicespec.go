@@ -21,10 +21,11 @@ package v1beta1
 // FooServerServiceSpecApplyConfiguration represents an declarative configuration of the FooServerServiceSpec type for use
 // with apply.
 type FooServerServiceSpecApplyConfiguration struct {
-	ServiceName       *string `json:"serviceName,omitempty"`
-	ServiceType       *string `json:"serviceType,omitempty"`
-	ServicePort       *int    `json:"servicePort,omitempty"`
-	ServiceTargetPort *int    `json:"serviceTargetPort,omitempty"`
+	Name       *string `json:"name,omitempty"`
+	Type       *string `json:"type,omitempty"`
+	Port       *int32  `json:"port,omitempty"`
+	TargetPort *int32  `json:"targetPort,omitempty"`
+	NodePort   *int32  `json:"nodePort,omitempty"`
 }
 
 // FooServerServiceSpecApplyConfiguration constructs an declarative configuration of the FooServerServiceSpec type for use with
@@ -33,34 +34,42 @@ func FooServerServiceSpec() *FooServerServiceSpecApplyConfiguration {
 	return &FooServerServiceSpecApplyConfiguration{}
 }
 
-// WithServiceName sets the ServiceName field in the declarative configuration to the given value
+// WithName sets the Name field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ServiceName field is set to the value of the last call.
-func (b *FooServerServiceSpecApplyConfiguration) WithServiceName(value string) *FooServerServiceSpecApplyConfiguration {
-	b.ServiceName = &value
+// If called multiple times, the Name field is set to the value of the last call.
+func (b *FooServerServiceSpecApplyConfiguration) WithName(value string) *FooServerServiceSpecApplyConfiguration {
+	b.Name = &value
 	return b
 }
 
-// WithServiceType sets the ServiceType field in the declarative configuration to the given value
+// WithType sets the Type field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ServiceType field is set to the value of the last call.
-func (b *FooServerServiceSpecApplyConfiguration) WithServiceType(value string) *FooServerServiceSpecApplyConfiguration {
-	b.ServiceType = &value
+// If called multiple times, the Type field is set to the value of the last call.
+func (b *FooServerServiceSpecApplyConfiguration) WithType(value string) *FooServerServiceSpecApplyConfiguration {
+	b.Type = &value
 	return b
 }
 
-// WithServicePort sets the ServicePort field in the declarative configuration to the given value
+// WithPort sets the Port field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ServicePort field is set to the value of the last call.
-func (b *FooServerServiceSpecApplyConfiguration) WithServicePort(value int) *FooServerServiceSpecApplyConfiguration {
-	b.ServicePort = &value
+// If called multiple times, the Port field is set to the value of the last call.
+func (b *FooServerServiceSpecApplyConfiguration) WithPort(value int32) *FooServerServiceSpecApplyConfiguration {
+	b.Port = &value
 	return b
 }
 
-// WithServiceTargetPort sets the ServiceTargetPort field in the declarative configuration to the given value
+// WithTargetPort sets the TargetPort field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the ServiceTargetPort field is set to the value of the last call.
-func (b *FooServerServiceSpecApplyConfiguration) WithServiceTargetPort(value int) *FooServerServiceSpecApplyConfiguration {
-	b.ServiceTargetPort = &value
+// If called multiple times, the TargetPort field is set to the value of the last call.
+func (b *FooServerServiceSpecApplyConfiguration) WithTargetPort(value int32) *FooServerServiceSpecApplyConfiguration {
+	b.TargetPort = &value
+	return b
+}
+
+// WithNodePort sets the NodePort field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the NodePort field is set to the value of the last call.
+func (b *FooServerServiceSpecApplyConfiguration) WithNodePort(value int32) *FooServerServiceSpecApplyConfiguration {
+	b.NodePort = &value
 	return b
 }

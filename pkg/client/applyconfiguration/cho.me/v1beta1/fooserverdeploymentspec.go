@@ -21,7 +21,7 @@ package v1beta1
 // FooServerDeploymentSpecApplyConfiguration represents an declarative configuration of the FooServerDeploymentSpec type for use
 // with apply.
 type FooServerDeploymentSpecApplyConfiguration struct {
-	DeploymentName   *string `json:"deploymentName,omitempty"`
+	Name             *string `json:"name,omitempty"`
 	PodReplicas      *int32  `json:"podReplicas,omitempty"`
 	PodContainerPort *int32  `json:"podContainerPort,omitempty"`
 }
@@ -32,11 +32,11 @@ func FooServerDeploymentSpec() *FooServerDeploymentSpecApplyConfiguration {
 	return &FooServerDeploymentSpecApplyConfiguration{}
 }
 
-// WithDeploymentName sets the DeploymentName field in the declarative configuration to the given value
+// WithName sets the Name field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the DeploymentName field is set to the value of the last call.
-func (b *FooServerDeploymentSpecApplyConfiguration) WithDeploymentName(value string) *FooServerDeploymentSpecApplyConfiguration {
-	b.DeploymentName = &value
+// If called multiple times, the Name field is set to the value of the last call.
+func (b *FooServerDeploymentSpecApplyConfiguration) WithName(value string) *FooServerDeploymentSpecApplyConfiguration {
+	b.Name = &value
 	return b
 }
 

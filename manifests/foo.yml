@@ -3,10 +3,20 @@ kind: FooServer
 metadata:
   labels:
     app.kubernetes.io/created-by: fooserver
-  name: fooservers.cho.me
+  name: fooservers.resource1
   namespace: default
 spec:
   deploymentSpec:
-    deploymentName: "fooServerDeployment"
-    podReplicas: 3
+    name: "foo-server-deployment"
+    podReplicas: 1
     podContainerPort: 3000
+  serviceSpec:
+    name: "foo-server-service"
+    targetPort: 3000
+    port: 3000
+    type: NodePort
+    nodePort: 30100
+  secretSpec:
+    name: "foo-server-secret"
+    username: "admin"
+    password: "password"

@@ -21,9 +21,9 @@ package v1beta1
 // FooServerSecretSpecApplyConfiguration represents an declarative configuration of the FooServerSecretSpec type for use
 // with apply.
 type FooServerSecretSpecApplyConfiguration struct {
-	SecretName   *string `json:"secretName,omitempty"`
-	UsernameData *string `json:"usernameData,omitempty"`
-	PasswordData *string `json:"passwordData,omitempty"`
+	Name     *string `json:"name,omitempty"`
+	Username *string `json:"username,omitempty"`
+	Password *string `json:"password,omitempty"`
 }
 
 // FooServerSecretSpecApplyConfiguration constructs an declarative configuration of the FooServerSecretSpec type for use with
@@ -32,26 +32,26 @@ func FooServerSecretSpec() *FooServerSecretSpecApplyConfiguration {
 	return &FooServerSecretSpecApplyConfiguration{}
 }
 
-// WithSecretName sets the SecretName field in the declarative configuration to the given value
+// WithName sets the Name field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the SecretName field is set to the value of the last call.
-func (b *FooServerSecretSpecApplyConfiguration) WithSecretName(value string) *FooServerSecretSpecApplyConfiguration {
-	b.SecretName = &value
+// If called multiple times, the Name field is set to the value of the last call.
+func (b *FooServerSecretSpecApplyConfiguration) WithName(value string) *FooServerSecretSpecApplyConfiguration {
+	b.Name = &value
 	return b
 }
 
-// WithUsernameData sets the UsernameData field in the declarative configuration to the given value
+// WithUsername sets the Username field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the UsernameData field is set to the value of the last call.
-func (b *FooServerSecretSpecApplyConfiguration) WithUsernameData(value string) *FooServerSecretSpecApplyConfiguration {
-	b.UsernameData = &value
+// If called multiple times, the Username field is set to the value of the last call.
+func (b *FooServerSecretSpecApplyConfiguration) WithUsername(value string) *FooServerSecretSpecApplyConfiguration {
+	b.Username = &value
 	return b
 }
 
-// WithPasswordData sets the PasswordData field in the declarative configuration to the given value
+// WithPassword sets the Password field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the PasswordData field is set to the value of the last call.
-func (b *FooServerSecretSpecApplyConfiguration) WithPasswordData(value string) *FooServerSecretSpecApplyConfiguration {
-	b.PasswordData = &value
+// If called multiple times, the Password field is set to the value of the last call.
+func (b *FooServerSecretSpecApplyConfiguration) WithPassword(value string) *FooServerSecretSpecApplyConfiguration {
+	b.Password = &value
 	return b
 }
